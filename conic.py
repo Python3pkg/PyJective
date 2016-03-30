@@ -1,5 +1,7 @@
+import itertools as it
 import numpy as np
 import np_helpers
+import math
 import transformation
 
 
@@ -18,9 +20,9 @@ def fromFivePoints(p1, p2, p3, p4, p5):
         A += [[p[0]**2, p[0]*p[1], p[0]*p[2], p[1]**2, p[1]*p[2], p[2]**2]]
     return np_helpers.nullspace(A)
 
-def mapToStandard(e, p, q, r):
+def threePointsToStandard(e, p, q, r):
     """Return a projective transformation that maps three points on a conic to
-the conic xy + xz + yz = 0.
+the conic xy + yz + xz = 0.
     
     Keyword arguments:
     e -- a projective conic
@@ -28,30 +30,58 @@ the conic xy + xz + yz = 0.
     q -- the second point on e
     r -- the third point on e
     """
-    A = np.matrix([p, q, r])
     
-    p = np.matrix(p)
-    q = np.matrix(q)
-    r = np.matrix(r)
+    # a, c, and h are found on the diagonal.
+    a, c, h = np.diag(e)
     
-    xxp = e[0] * np.dot(p.T, p)
-    xyp = e[1] * np.dot(p.T, q)
-    xzp = e[2] * np.dot(p.T, r)
-    yyp = e[3] * np.dot(q.T, q)
-    yzp = e[4] * np.dot(q.T, r)
-    zzp = e[5] * np.dot(r.T, r)
+    # b/2, f/2, and g/2 can all be found above the diagonal.
+    b, f, g = 2 * np.array(e)[np.triu_indices(3, 1)]
     
-    M = xxp + xyp + xzp + yyp + yzp + zzp
+    # f and c are switched so that coeffs works with combinatoric iteration.
+    coeffs = [a, b, f, c, g, h]
     
-    b = M.item(0, 1) + M.item(1, 0)
-    f = M.item(0, 2) + M.item(2, 0)
-    g = M.item(2, 1) + M.item(1, 2)
+    # Determine a matrix A associated with a projective transformation that
+    # maps P, Q, and R onto [1, 0, 0], [0, 1, 0], and [0, 0, 1], respectively.
+    A = np.linalg.inv(np.vstack([p, q, r]))
     
-    B = np.matrix([[1/g, 0  , 0  ],
-                   [0  , 1/f, 0  ],
-                   [0  , 0  , 1/b]])
+    # Determine the equation bx'y' + fx'z' + gy'z' = 0 of t(E), for some real
+    # numbers b, f, and g.
+    M = sum([coeff * u.T * v
+             for (u, v), coeff
+             in zip(it.combinations_with_replacement((p, q, r), 2), coeffs)])
     
-    return np.dot(B, np.linalg.inv(A))
+    # Get B from M by adding like terms to find b, f, and g and then
+    # constructing a diagonal matrix from the flat [1/g, 1/f, 1/b].
+    B = np.diagflat([1 / (u + v)
+                    for u, v
+                    in reversed(zip(np.array(M)[np.triu_indices(3, 1)],
+                                    np.array(M)[np.tril_indices(3, -1)]))])
+    
+    return B * A
+
+
+def mapToStandard(e):
+    """Return a projective transformation that maps a projective conic to the
+standard conic x^2 + y^2 = z^2.
+    
+    Keyword arguments:
+    e -- a projective conic
+    """
+    
+    # Find a matrix A associated with E.
+    A = np.matrix(e)
+    
+    # Find an orthogonal matrix P such that (P^T)AP is diagonal.
+    D, P = np.linalg.eig(A)
+    
+    # Find the associated matrix for t: [x] |-> [B(P^T)x].
+    B = np.matrix(
+        [[math.sqrt(abs(D[0])),                    0,                       0],
+         [                   0, math.sqrt(abs(D[1])),                       0],
+         [                   0,                       0, math.sqrt(abs(D[2]))]]
+    )
+    return B * P.T
+    
 
 def mapThreePoints(e1, p1, q1, r1, e2, p2, q2, r2):
     """Return a projective transformation that maps three points on a conic to
@@ -67,6 +97,6 @@ three points on another conic.
     q2 -- the second point on e2
     r2 -- the third point on e2
     """
-    t1 = mapToStandard(e1, p1, q1, r1)
-    t2 = mapToStandard(e2, p2, q2, r2)
+    t1 = threePointsToStandard(e1, p1, q1, r1)
+    t2 = threePointsToStandard(e2, p2, q2, r2)
     return compose(np.linalg.inv(t2), t1)
