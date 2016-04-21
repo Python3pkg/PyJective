@@ -5,6 +5,23 @@ import math
 import transformation
 
 
+def coefficients(e):
+    """Return the coefficients of a projective conic.
+    
+    Keyword arguments:
+    e -- a projective conic in matrix format
+    """
+    
+    # a, c, and h are found on the diagonal.
+    a, c, h = np.diag(e)
+    
+    # b/2, f/2, and g/2 can be found above the diagonal.
+    b, f, g = 2 * np.array(e)[np.triu_indices(3, 1)]
+    
+    # f and c are switched to work with combinatoric iteration.
+    return a, b, f, c, g, h
+
+
 def fromFivePoints(p1, p2, p3, p4, p5):
     """Return the projective conic defined by the given points.
     
@@ -15,9 +32,9 @@ def fromFivePoints(p1, p2, p3, p4, p5):
     p4 -- the fourth point
     p5 -- the fifth point
     """
-    A = [[u * v for u, v in combinations_with_replacement(p, 2)]
+    a = [[u * v for u, v in combinations_with_replacement(p, 2)]
          for p in p1, p2, p3, p4, p5]
-    return np_helpers.nullspace(A)
+    return np_helpers.nullspace(a)
 
 def threePointsToStandard(e, p, q, r):
     """Return a projective transformation that maps three points on a conic to
@@ -29,15 +46,8 @@ the conic xy + yz + xz = 0.
     q -- the second point on e
     r -- the third point on e
     """
-    
-    # a, c, and h are found on the diagonal.
-    a, c, h = np.diag(e)
-    
-    # b/2, f/2, and g/2 can all be found above the diagonal.
-    b, f, g = 2 * np.array(e)[np.triu_indices(3, 1)]
-    
-    # f and c are switched so that coeffs works with combinatoric iteration.
-    coeffs = [a, b, f, c, g, h]
+    coeffs = coefficients(e)
+    p, q, r = np.matrix(p), np.matrix(q), np.matrix(r)
     
     # Determine a matrix A associated with a projective transformation that
     # maps P, Q, and R onto [1, 0, 0], [0, 1, 0], and [0, 0, 1], respectively.
@@ -68,18 +78,14 @@ standard conic x^2 + y^2 = z^2.
     """
     
     # Find a matrix A associated with E.
-    A = np.matrix(e)
+    a = np.matrix(e)
     
     # Find an orthogonal matrix P such that (P^T)AP is diagonal.
-    D, P = np.linalg.eig(A)
+    eigs, p = np.linalg.eig(a)
     
-    # Find the associated matrix for t: [x] |-> [B(P^T)x].
-    B = np.matrix(
-        [[math.sqrt(abs(D[0])),                    0,                       0],
-         [                   0, math.sqrt(abs(D[1])),                       0],
-         [                   0,                       0, math.sqrt(abs(D[2]))]]
-    )
-    return B * P.T
+    # Find the associated matrix B for t: [x] |-> [B(P^T)x].
+    b = np.diagflat([math.sqrt(abs(eig)) for eig in eigs])
+    return b * p.T
     
 
 def mapThreePoints(e1, p1, q1, r1, e2, p2, q2, r2):
