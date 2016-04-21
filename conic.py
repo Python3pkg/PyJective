@@ -22,6 +22,19 @@ def coefficients(e):
     return a, b, f, c, g, h
 
 
+def toMatrix(coeffs):
+    """Given coefficients of a projective conic, return a corresponding matrix.
+    
+    Keyword arguments:
+    coeffs -- a sequence containing the coefficients of a projective conic
+    """
+    a, b, f, c, g, h = coeffs
+    return np.matrix(
+        [[    a, b / 2, f / 2],
+         [b / 2,     c, g / 2],
+         [f / 2, g / 2,     h]]
+    )
+
 def fromFivePoints(p1, p2, p3, p4, p5):
     """Return the projective conic defined by the given points.
     
