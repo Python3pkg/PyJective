@@ -1,4 +1,4 @@
-import itertools as it
+from itertools import combinations_with_replacement
 import numpy as np
 import np_helpers
 import math
@@ -15,9 +15,8 @@ def fromFivePoints(p1, p2, p3, p4, p5):
     p4 -- the fourth point
     p5 -- the fifth point
     """
-    A = []
-    for p in (p1, p2, p3, p4, p5):
-        A += [[p[0]**2, p[0]*p[1], p[0]*p[2], p[1]**2, p[1]*p[2], p[2]**2]]
+    A = [[u * v for u, v in combinations_with_replacement(p, 2)]
+         for p in p1, p2, p3, p4, p5]
     return np_helpers.nullspace(A)
 
 def threePointsToStandard(e, p, q, r):
@@ -48,7 +47,7 @@ the conic xy + yz + xz = 0.
     # numbers b, f, and g.
     M = sum([coeff * u.T * v
              for (u, v), coeff
-             in zip(it.combinations_with_replacement((p, q, r), 2), coeffs)])
+             in zip(combinations_with_replacement((p, q, r), 2), coeffs)])
     
     # Get B from M by adding like terms to find b, f, and g and then
     # constructing a diagonal matrix from the flat [1/g, 1/f, 1/b].
