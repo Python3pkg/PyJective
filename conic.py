@@ -1,8 +1,12 @@
+from collections import namedtuple
 from itertools import combinations_with_replacement
 import numpy as np
 import np_helpers
 import math
 import transformation
+
+
+#Conic = namedtuple('Conic', ['a', 'b', 'c', 'f', 'g', 'h'], verbose = False)
 
 
 def toCoefficients(e):
@@ -12,14 +16,13 @@ def toCoefficients(e):
     e -- a projective conic in matrix format
     """
     
-    # a, c, and h are found on the diagonal.
-    a, c, h = np.diag(e)
+    # a, f, and h are found on the diagonal.
+    a, f, h = np.diag(e)
     
-    # b/2, f/2, and g/2 can be found above the diagonal.
-    b, f, g = 2 * np.array(e)[np.triu_indices(3, 1)]
+    # b/2, c/2, and g/2 can be found above the diagonal.
+    b, c, g = 2 * np.array(e)[np.triu_indices(3, 1)]
     
-    # f and c are switched to work with combinatoric iteration.
-    return a, b, f, c, g, h
+    return np.array((a, b, c, f, g, h))
 
 
 def toMatrix(coeffs):
@@ -28,11 +31,11 @@ def toMatrix(coeffs):
     Keyword arguments:
     coeffs -- a sequence containing the coefficients of a projective conic
     """
-    a, b, f, c, g, h = coeffs
+    a, b, c, f, g, h = coeffs
     return np.matrix(
-        [[    a, b / 2, f / 2],
-         [b / 2,     c, g / 2],
-         [f / 2, g / 2,     h]]
+        [[    a, b / 2, c / 2],
+         [b / 2,     f, g / 2],
+         [c / 2, g / 2,     h]]
     )
 
 def fromFivePoints(p1, p2, p3, p4, p5):
@@ -47,7 +50,7 @@ def fromFivePoints(p1, p2, p3, p4, p5):
     """
     a = [[u * v for u, v in combinations_with_replacement(p, 2)]
          for p in p1, p2, p3, p4, p5]
-    return np_helpers.nullspace(a)
+    return np_helpers.nullspace(a).flatten()
 
 def threePointsToStandard(e, p, q, r):
     """Return a projective transformation that maps three points on a conic to
@@ -59,7 +62,7 @@ the conic xy + yz + xz = 0.
     q -- the second point on e
     r -- the third point on e
     """
-    coeffs = toCoefficients(e)
+    coeffs = e
     p, q, r = np.matrix(p), np.matrix(q), np.matrix(r)
     
     # Determine a matrix A associated with a projective transformation that
@@ -69,8 +72,8 @@ the conic xy + yz + xz = 0.
     # Determine the equation bx'y' + fx'z' + gy'z' = 0 of t(E), for some real
     # numbers b, f, and g.
     M = sum([coeff * u.T * v
-             for (u, v), coeff
-             in zip(combinations_with_replacement((p, q, r), 2), coeffs)])
+             for coeff, (u, v)
+             in zip(coeffs, combinations_with_replacement((p, q, r), 2))])
     
     # Get B from M by adding like terms to find b, f, and g and then
     # constructing a diagonal matrix from the flat [1/g, 1/f, 1/b].
@@ -91,7 +94,7 @@ standard conic x^2 + y^2 = z^2.
     """
     
     # Find a matrix A associated with E.
-    a = np.matrix(e)
+    a = toMatrix(e)
     
     # Find an orthogonal matrix P such that (P^T)AP is diagonal.
     eigs, p = np.linalg.eig(a)
