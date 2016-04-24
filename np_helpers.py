@@ -1,19 +1,6 @@
 import numpy as np
 
 
-# Figure out the name for what this actually does.
-def coeffs(*args):
-    """Returns the coefficients that solve the equation a0*x0 + ... + an-1*xn-1
- = xn.
-    
-    Keyword arguments:
-    *args -- vectors to be used in the equation.
-    """
-    A = np.matrix(args[:-1], dtype=float).T
-    b = np.matrix(args[-1], dtype=float).T
-    return np.linalg.lstsq(A, b)[0]
-
-
 def isArrayLike(x):
     """Return True if x has length and is not a string.
     

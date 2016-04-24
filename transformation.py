@@ -23,7 +23,7 @@ def findTf(q1, q2=None):
     if q2:
         return findTf(q2).composite(inv(findTf(q1)))
     else:
-        x = coeffs(*q1)
+        x = np.linalg.solve(np.matrix(q1[:-1]).T, np.matrix(q1[-1]).T)
         return np.multiply(q1[:-1], x).T
 
 
@@ -37,8 +37,8 @@ def crossRatio(p1, p2, p3, p4):
     p3 -- the third point
     p4 -- the fourth point
     """
-    a, b = coeffs(p1, p2, p3)
-    c, d = coeffs(p1, p2, p4)
+    a, b = np.linalg.lstsq(np.matrix([p1, p2]).T, np.matrix(p3).T)[0]
+    c, d = np.linalg.lstsq(np.matrix([p1, p2]).T, np.matrix(p4).T)[0]
     return ((b / a) / (d / c))[(0, 0)] # Unpack result from numpy matrix.
 
 def inv(A):
