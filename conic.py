@@ -5,7 +5,7 @@ import math
 import transformation
 
 
-def coefficients(e):
+def toCoefficients(e):
     """Return the coefficients of a projective conic.
     
     Keyword arguments:
@@ -59,7 +59,7 @@ the conic xy + yz + xz = 0.
     q -- the second point on e
     r -- the third point on e
     """
-    coeffs = coefficients(e)
+    coeffs = toCoefficients(e)
     p, q, r = np.matrix(p), np.matrix(q), np.matrix(r)
     
     # Determine a matrix A associated with a projective transformation that
