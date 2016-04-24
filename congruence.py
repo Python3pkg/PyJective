@@ -26,35 +26,3 @@ def areCongruent(f1, f2, eps=0.001):
         return all(abs(ratio - ratios[0]) < eps for ratio in ratios)
     else:
         return False
-
-
-# Goal: make this work in n dimensions.
-def areIncident(c1, c2, c3):
-    """Return True if given points/lines are incident, otherwise False.
-    
-    Keyword arguments:
-    c1 -- the first point/line
-    c2 -- the second point/line
-    c3 -- the third point/line
-    """
-    return np.linalg.det(coords) == 0
-
-
-def containingLine(c1, c2):
-    """Return the line that contains the provided points.
-    
-    Keyword arguments:
-    c1 -- the first point
-    c2 -- the second point
-    """
-    return np.cross(c1, c2)
-
-
-def pointOfIntersection(c1, c2):
-    """Return the point where the provided lines intersect.
-    
-    Keyword arguments:
-    c1 -- the first line
-    c2 -- the second line
-    """
-    return np.cross(c1, c2)
