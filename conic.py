@@ -49,7 +49,7 @@ def fromFivePoints(p1, p2, p3, p4, p5):
     p5 -- the fifth point
     """
     a = [[u * v for u, v in combinations_with_replacement(p, 2)]
-         for p in p1, p2, p3, p4, p5]
+         for p in (p1, p2, p3, p4, p5)]
     return np_helpers.nullspace(a).flatten()
 
 def threePointsToStandard(e, p, q, r):
@@ -79,8 +79,8 @@ the conic xy + yz + xz = 0.
     # constructing a diagonal matrix from the flat [1/g, 1/f, 1/b].
     B = np.diagflat([1 / (u + v)
                     for u, v
-                    in reversed(zip(np.array(M)[np.triu_indices(3, 1)],
-                                    np.array(M)[np.tril_indices(3, -1)]))])
+                    in reversed(list(zip(np.array(M)[np.triu_indices(3, 1)],
+                                    np.array(M)[np.tril_indices(3, -1)])))])
     
     return B * A
 
